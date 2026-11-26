@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TasCorp — автотесты</title>
+<style>
+  :root {
+    --bg: #f4f6fa; --card: #fff; --text: #1a2233; --muted: #6b7486; --line: #e3e7ef;
+    --brand: #0053d6; --brand-hover: #0045b3;
+    --ok: #12824c; --ok-bg: #e3f5ea; --fail: #c62828; --fail-bg: #fdecec;
+    --warn: #a15c00; --warn-bg: #fff3dc; --run: #0053d6; --run-bg: #e5eefc;
+    --idle-bg: #eef0f4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--brand); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .sub { opacity: .8; font-size: 13px; }
+  .nav { display: flex; gap: 4px; margin-left: 12px; }
+  .nav a { color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; opacity: .8; font-weight: 500; }
+  .nav a:hover { background: rgba(255,255,255,.12); opacity: 1; }
+  .nav a.active { background: rgba(255,255,255,.2); opacity: 1; }
+  .health { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { background: rgba(255,255,255,.15); border-radius: 999px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #aaa; }
+  .dot.on { background: #4ade80; } .dot.off { background: #f87171; }
+
+  main { max-width: 1280px; margin: 20px auto; padding: 0 16px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .card h2 { font-size: 15px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+  .card h2 .count { color: var(--muted); font-weight: 400; }
+
+  .platforms { display: inline-flex; margin: 12px 16px 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .platform { border: 0; background: #fafbfd; color: var(--muted); padding: 8px 20px; cursor: pointer; font: inherit; font-weight: 600; }
+  .platform + .platform { border-left: 1px solid var(--line); }
+  .platform:hover { background: #f0f3f8; }
+  .platform.active { background: var(--text); color: #fff; }
+  .platform .count { opacity: .7; font-weight: 400; }
+  .platform-err { margin: 8px 16px 0; color: #b42318; font-size: 12px; white-space: pre-wrap; }
+  .tabs { display: flex; gap: 6px; padding: 12px 16px 0; flex-wrap: wrap; }
+  .tab { border: 1px solid var(--line); background: #fafbfd; color: var(--muted); padding: 7px 14px; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 500; }
+  .tab:hover { background: #f0f3f8; }
+  .tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .tab .count { opacity: .75; font-weight: 400; }
+
+  .toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .toolbar input[type=search] { flex: 1; min-width: 180px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--text); padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  button:hover:not(:disabled) { background: #f0f3f8; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: var(--brand-hover); }
+  button.danger { color: var(--fail); border-color: #f1c4c4; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; background: #fafbfd; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+  td.cb, th.cb { width: 40px; text-align: center; }
+  input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--brand); }
+  .num { width: 40px; color: var(--muted); }
+  .title { font-weight: 500; }
+  .dur { width: 80px; color: var(--muted); white-space: nowrap; }
+  .st { width: 130px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--idle-bg); color: var(--muted); }
+  .badge.passed { background: var(--ok-bg); color: var(--ok); }
+  .badge.failed, .badge.error { background: var(--fail-bg); color: var(--fail); }
+  .badge.skipped, .badge.not_run { background: var(--warn-bg); color: var(--warn); }
+  .badge.running { background: var(--run-bg); color: var(--run); }
+  .badge.running::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  details.err { margin-top: 6px; }
+  details.err summary { cursor: pointer; color: var(--fail); font-size: 12px; }
+  .video-link { color: var(--brand); font-size: 12px; text-decoration: none; }
+  .video-link:hover { text-decoration: underline; }
+  details.err pre { max-height: 260px; overflow: auto; background: #1e2330; color: #e6e9ef; padding: 10px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
+  .empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+
+  .fields { padding: 12px 16px; border-bottom: 1px solid var(--line); background: #fafbfd; }
+  .fields .hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .fields .row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .fields .row:last-child { margin-bottom: 0; }
+  .fields label { width: 220px; flex-shrink: 0; font-size: 13px; }
+  .fields input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  .fields input[type=text].empty-required { border-color: var(--warn); background: var(--warn-bg); }
+
+  .side { display: flex; flex-direction: column; gap: 20px; }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px; }
+  .stat { background: #fafbfd; border: 1px solid var(--line); border-radius: 8px; padding: 8px; text-align: center; }
+  .stat b { display: block; font-size: 20px; }
+  .stat span { font-size: 11px; color: var(--muted); }
+  .stat.ok b { color: var(--ok); } .stat.fail b { color: var(--fail); } .stat.run b { color: var(--run); }
+  .runinfo { padding: 0 16px 12px; color: var(--muted); font-size: 12px; }
+  .log { margin: 0; background: #1e2330; color: #d7dbe3; font: 12px/1.5 ui-monospace, Menlo, monospace; padding: 12px; height: 280px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+  .history { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; }
+  .history li { padding: 10px 16px; border-bottom: 1px solid var(--line); cursor: pointer; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .history li:hover { background: #fafbfd; }
+  .history li.active { background: var(--run-bg); }
+  .history .meta { font-size: 12px; color: var(--muted); }
+  .screen { padding: 14px 16px; display: flex; justify-content: center; }
+  .phone { position: relative; width: 100%; max-width: 280px; aspect-ratio: 1080 / 2400; background: #11151f; border-radius: 22px; border: 6px solid #11151f; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
+  .phone img { width: 100%; height: 100%; object-fit: contain; display: none; background: #000; }
+  .phone.live img { display: block; }
+  .phone .placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #8a93a6; font-size: 13px; text-align: center; padding: 20px; }
+  .phone.live .placeholder { display: none; }
+  .live-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--idle-bg); color: var(--muted); margin-left: auto; }
+  .live-badge.on { background: var(--fail-bg); color: var(--fail); }
+  .live-badge.on::before { content: "● "; animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  .fail-shot { display: inline-block; margin-top: 8px; }
+  .fail-shot img { width: 120px; border: 1px solid var(--line); border-radius: 6px; display: block; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a2233; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; z-index: 10; }
+
+  /* Папки и переименование кейсов */
+  .proj-row td { background: #e9eef7; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 8px 12px; }
+  .folder-row td { background: #f3f6fb; padding: 8px 12px; }
+  tbody tr.folder-row:hover { background: #eef2f9; }
+  .fname { font-weight: 600; cursor: pointer; user-select: none; }
+  .fname .arrow { display: inline-block; width: 14px; color: var(--muted); }
+  .fcount { color: var(--muted); font-weight: 400; }
+  .icon-btn { border: none; background: none; padding: 2px 6px; margin-left: 2px; color: var(--muted); cursor: pointer; border-radius: 4px; font-size: 13px; line-height: 1.2; }
+  .icon-btn:hover:not(:disabled) { background: #e3e8f1; color: var(--text); }
+  tr .row-actions { opacity: .35; }
+  tr:hover .row-actions, .row-actions:focus-within { opacity: 1; }
+  td.nested { padding-left: 30px; }
+  .title-line .row-actions { white-space: nowrap; }
+  .title-edit { display: flex; gap: 4px; align-items: center; }
+  .title-edit input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--brand); border-radius: 6px; font: inherit; }
+  .sub-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 3px; }
+  .sub-line select { font: inherit; font-size: 12px; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--text); max-width: 240px; }
+  .folder-empty td { color: var(--muted); font-size: 12px; padding: 8px 12px 8px 30px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>TasCorp — автотесты</h1>
+    <div class="sub">Appium + pytest · Android / iOS · UZ / KZ</div>
+  </div>
+  <nav class="nav">
+    <a href="/" class="active">Автотесты</a>
+    <a href="/management">Management</a>
+  </nav>
+  <div class="health">
+    <span class="pill"><span class="dot" id="hAppium"></span><span id="hAppiumTxt">Appium…</span></span>
+    <span class="pill"><span class="dot" id="hDevice"></span><span id="hDeviceTxt">Устройство…</span></span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Тест-кейсы <span class="count" id="totalCount"></span></h2>
+    <div class="platforms" id="platformTabs"></div>
+    <div class="platform-err" id="platformErr" hidden></div>
+    <div class="tabs" id="projectTabs"></div>
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Поиск по названию…">
+      <span id="selInfo" class="count" style="color:var(--muted)"></span>
+      <button id="btnNewFolder" title="Создать папку во вкладке проекта">+ Папка</button>
+      <button id="btnReload" title="Перечитать список тестов">Обновить</button>
+      <button id="btnStop" class="danger" disabled>Остановить</button>
+      <button id="btnRun" class="primary" disabled>Запустить</button>
+    </div>
+    <div class="fields" id="fieldsPanel" hidden></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="cb"><input type="checkbox" id="checkAll" title="Выбрать все"></th>
+          <th class="num">#</th>
+          <th>Название кейса</th>
+          <th class="st">Статус</th>
+          <th class="dur">Время</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="5" class="empty">Загрузка списка тестов…</td></tr></tbody>
+    </table>
+  </section>
+
+  <aside class="side">
+    <section class="card">
+      <h2>Экран устройства <span class="live-badge" id="liveBadge">нет трансляции</span></h2>
+      <div class="screen">
+        <div class="phone" id="phone">
+          <img id="stream" alt="Экран устройства">
+          <div class="placeholder" id="placeholder">Трансляция появится,<br>когда начнётся тест</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Запуск <span class="count" id="runId"></span></h2>
+      <div class="summary">
+        <div class="stat"><b id="cTotal">0</b><span>всего</span></div>
+        <div class="stat ok"><b id="cPassed">0</b><span>успешно</span></div>
+        <div class="stat fail"><b id="cFailed">0</b><span>упало</span></div>
+        <div class="stat run"><b id="cRunning">0</b><span>в работе</span></div>
+      </div>
+      <div class="runinfo" id="runInfo">Выберите кейсы и нажмите «Запустить».</div>
+      <pre class="log" id="log"></pre>
+    </section>
+
+    <section class="card">
+      <h2>История запусков</h2>
+      <ul class="history" id="history"><li class="meta">Пока пусто</li></ul>
+    </section>
+  </aside>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const STATUS = {
+  queued: "В очереди", running: "Выполняется", passed: "Успешно", failed: "Упал",
+  error: "Ошибка", skipped: "Пропущен", not_run: "Не запускался",
+};
+const $ = (id) => document.getElementById(id);
+let allTests = [];        // кейсы всех платформ
+let tests = [];           // кейсы выбранной платформы — с ними работает весь остальной интерфейс
+let platforms = [];       // [{key, title}] — Android / iOS
+let platformErrors = {};  // платформа -> текст ошибки сбора кейсов
+let currentPlatform = "android";
+let selected = new Set();
+let viewRun = null;     // сводка запуска, который сейчас показан
+let pollTimer = null;
+let lastLogLen = 0;
+let currentProject = "all";   // фильтр вкладок: "all" или ключ проекта ("uz", "kz", …)
+
+let folders = [];              // папки из admin/catalog.json: {id, project, name}
+let collapsed = new Set();     // свёрнутые группы (id папки или "none:<проект>")
+let editing = null;            // nodeid кейса, название которого сейчас редактируется
+let editDraft = "";
+let groupIds = new Map();      // группа -> nodeid её кейсов (для галочки на папке)
+
+try { selected = new Set(JSON.parse(localStorage.getItem("selected") || "[]")); } catch {}
+try { currentProject = localStorage.getItem("project") || "all"; } catch {}
+try { currentPlatform = localStorage.getItem("platform") || "android"; } catch {}
+try { collapsed = new Set(JSON.parse(localStorage.getItem("collapsed") || "[]")); } catch {}
+const saveSel = () => { try { localStorage.setItem("selected", JSON.stringify([...selected])); } catch {} };
+const saveCollapsed = () => { try { localStorage.setItem("collapsed", JSON.stringify([...collapsed])); } catch {} };
+
+// Доп. поля для кейсов, которым нужны внешние данные (см. pytest.mark.fields) —
+// например ИИН/VIN/ГРНЗ реальной кредитной линии для теста «Транш». Значения хранятся
+// локально в браузере (per-env var), чтобы не перевводить их перед каждым запуском.
+let fieldValues = {};
+try { fieldValues = JSON.parse(localStorage.getItem("fieldValues") || "{}"); } catch {}
+const saveFieldValues = () => { try { localStorage.setItem("fieldValues", JSON.stringify(fieldValues)); } catch {} };
+
+function neededFields() {
+  const byEnv = new Map();
+  for (const t of tests) {
+    if (!selected.has(t.nodeid)) continue;
+    for (const f of (t.fields || [])) byEnv.set(f.env, f);
+  }
+  return [...byEnv.values()];
+}
+
+function renderFields() {
+  const fields = neededFields();
+  const panel = $("fieldsPanel");
+  if (!fields.length) { panel.hidden = true; panel.innerHTML = ""; return; }
+  panel.hidden = false;
+  const hint = fields.some(f => !f.optional)
+    ? "Эти данные нельзя сгенерировать случайно — заполните перед запуском (пустые обязательные поля → кейс будет пропущен с понятным сообщением):"
+    : "Данные для кейса — можно не заполнять:";
+  panel.innerHTML = `<div class="hint">${hint}</div>` +
+    fields.map(f => `<div class="row">
+      <label for="field_${esc(f.env)}">${esc(f.label)}</label>
+      <input type="text" id="field_${esc(f.env)}" data-env="${esc(f.env)}" value="${esc(fieldValues[f.env] || "")}"
+        ${f.optional ? `data-optional placeholder="необязательно — пусто: случайное значение"` : ""}
+        class="${fieldValues[f.env] || f.optional ? "" : "empty-required"}">
+    </div>`).join("");
+}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", 3500);
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const isRunning = () => viewRun && viewRun.state === "running";
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+async function loadTests() {
+  $("tbody").innerHTML = `<tr><td colspan="5" class="empty">Загрузка списка тестов…</td></tr>`;
+  try {
+    let data;
+    [data, folders] = await Promise.all([api("/api/tests"), api("/api/folders")]);
+    ({ tests: allTests, platforms, errors: platformErrors } = data);
+  } catch (e) {
+    $("tbody").innerHTML = `<tr><td colspan="5" class="empty">Не удалось собрать тесты:<pre style="text-align:left;white-space:pre-wrap">${esc(e.message)}</pre></td></tr>`;
+    return;
+  }
+  const ids = new Set(allTests.map(t => t.nodeid));
+  selected = new Set([...selected].filter(id => ids.has(id)));
+  saveSel();
+  if (!platforms.some(p => p.key === currentPlatform)) currentPlatform = platforms[0]?.key || "android";
+  applyPlatform();
+}
+
+// Платформа: Android и iOS — раздельные наборы кейсов (свой код, свой Appium, своё устройство).
+// Вкладки сборок, папки, выбор и запуск дальше работают внутри выбранной платформы.
+function applyPlatform() {
+  tests = allTests.filter(t => t.platform === currentPlatform);
+  const known = new Set(tests.map(t => t.project));
+  if (currentProject !== "all" && !known.has(currentProject)) currentProject = "all";
+  renderPlatforms();
+  renderTabs();
+  render({ force: true });
+  loadHealth();
+}
+
+function renderPlatforms() {
+  $("platformTabs").innerHTML = platforms.map(p => `
+    <button class="platform ${currentPlatform === p.key ? "active" : ""}" data-platform="${esc(p.key)}">
+      ${esc(p.title)} <span class="count">${allTests.filter(t => t.platform === p.key).length}</span>
+    </button>`).join("");
+  const err = platformErrors[currentPlatform];
+  $("platformErr").hidden = !err;
+  $("platformErr").textContent = err ? `Не удалось собрать кейсы платформы:\n${err}` : "";
+}
+
+const selectedHere = () => tests.filter(t => selected.has(t.nodeid)).length;
+
+// Вкладки проектов (UZ/KZ/…), собираются из того, что реально пришло от pytest —
+// новый проект появляется сам, как только в tests/<ключ>/ есть кейсы.
+function projectEntries() {
+  const byProject = new Map();
+  for (const t of tests) {
+    if (!byProject.has(t.project)) byProject.set(t.project, { title: t.project_title, count: 0 });
+    byProject.get(t.project).count++;
+  }
+  return [...byProject.entries()].sort((a, b) => a[1].title.localeCompare(b[1].title, "ru"));
+}
+
+function renderTabs() {
+  const tabs = [["all", { title: "Все", count: tests.length }], ...projectEntries()];
+  $("projectTabs").innerHTML = tabs.map(([key, info]) => `
+    <button class="tab ${currentProject === key ? "active" : ""}" data-project="${esc(key)}">
+      ${esc(info.title)} <span class="count">${info.count}</span>
+    </button>`).join("");
+}
+
+function visibleTests() {
+  const q = $("search").value.trim().toLowerCase();
+  return tests.filter(t =>
+    (currentProject === "all" || t.project === currentProject) &&
+    (!q || t.title.toLowerCase().includes(q) || t.original_title.toLowerCase().includes(q) || t.nodeid.toLowerCase().includes(q))
+  );
+}
+
+function testRow(t, nested, results) {
+  const r = results[t.nodeid];
+  const st = r?.status;
+  const badge = st ? `<span class="badge ${st}">${STATUS[st] || st}</span>` : `<span class="badge">—</span>`;
+  const shot = r?.screenshot ? `/reports/${encodeURIComponent(viewRun.id)}/screenshots/${encodeURIComponent(r.screenshot)}` : "";
+  const shotHtml = shot ? `<a class="fail-shot" href="${shot}" target="_blank" title="Экран в момент падения"><img src="${shot}" alt="Скриншот падения" loading="lazy"></a>` : "";
+  // Видео лежит в той же папке запуска, что и скриншоты (см. ios/tests/conftest.py)
+  const video = r?.video ? `/reports/${encodeURIComponent(viewRun.id)}/screenshots/${encodeURIComponent(r.video)}` : "";
+  const videoHtml = video ? `<div class="sub-line"><a class="video-link" href="${video}" target="_blank">▶ Запись экрана</a></div>` : "";
+  const err = r?.error ? `<details class="err"><summary>Подробности ошибки</summary>${shotHtml}<pre>${esc(r.error)}</pre></details>` : "";
+  const dur = r?.duration != null ? `${r.duration.toFixed(1)} с` : "";
+  const id = esc(t.nodeid);
+  const title = editing === t.nodeid
+    ? `<div class="title-edit">
+         <input id="titleInput" value="${esc(editDraft)}" maxlength="120" aria-label="Новое название кейса">
+         <button class="icon-btn" data-action="save-title" data-id="${id}" title="Сохранить (Enter)">✓</button>
+         <button class="icon-btn" data-action="cancel-title" title="Отмена (Esc)">✕</button>
+       </div>`
+    : `<div class="title-line"><span class="title">${esc(t.title)}</span>
+         <span class="row-actions">
+           <button class="icon-btn" data-action="edit-title" data-id="${id}" title="Переименовать кейс">✏️</button>
+         </span></div>`;
+  const projectFolders = folders.filter(f => f.project === t.project);
+  const select = projectFolders.length ? `<select data-move="${id}" title="Папка кейса">
+      <option value="">Без папки</option>
+      ${projectFolders.map(f => `<option value="${esc(f.id)}" ${t.folder === f.id ? "selected" : ""}>📁 ${esc(f.name)}</option>`).join("")}
+    </select>` : "";
+  return `<tr>
+    <td class="cb"><input type="checkbox" data-id="${id}" ${selected.has(t.nodeid) ? "checked" : ""} ${isRunning() ? "disabled" : ""}></td>
+    <td class="num">${tests.indexOf(t) + 1}</td>
+    <td class="${nested ? "nested" : ""}">${title}
+      ${select ? `<div class="sub-line">${select}</div>` : ""}${videoHtml}${err}</td>
+    <td class="st">${badge}</td>
+    <td class="dur">${dur}</td>
+  </tr>`;
+}
+
+function folderRow(key, folder, items, open) {
+  const ids = items.map(t => t.nodeid);
+  groupIds.set(key, ids);
+  const all = ids.length > 0 && ids.every(id => selected.has(id));
+  const some = !all && ids.some(id => selected.has(id));
+  const name = folder ? `📁 ${esc(folder.name)}` : "Без папки";
+  const actions = folder ? `<span class="row-actions">
+      <button class="icon-btn" data-action="rename-folder" data-folder="${esc(folder.id)}" title="Переименовать папку">✏️</button>
+      <button class="icon-btn" data-action="delete-folder" data-folder="${esc(folder.id)}" title="Удалить папку (кейсы останутся)">🗑</button>
+    </span>` : "";
+  return `<tr class="folder-row">
+    <td class="cb"><input type="checkbox" data-group="${esc(key)}" data-some="${some ? 1 : 0}" ${all ? "checked" : ""}
+      ${!ids.length || isRunning() ? "disabled" : ""} title="Выбрать все кейсы папки"></td>
+    <td colspan="4"><span class="fname" data-action="toggle" data-key="${esc(key)}"><span class="arrow">${open ? "▾" : "▸"}</span>${name}
+      <span class="fcount">(${ids.length})</span></span>${actions}</td>
+  </tr>`;
+}
+
+// Кейсы группируются по проектам (на вкладке «Все») и по папкам. Пока в проекте нет
+// ни одной папки, список выглядит как раньше — без заголовков групп.
+function tableRows(visible, results) {
+  const searching = !!$("search").value.trim();
+  groupIds = new Map();
+  const rows = [];
+  for (const [project, info] of projectEntries()) {
+    if (currentProject !== "all" && project !== currentProject) continue;
+    const projectTests = visible.filter(t => t.project === project);
+    const projectFolders = folders.filter(f => f.project === project);
+    if (!projectTests.length && (searching || !projectFolders.length)) continue;
+    if (currentProject === "all") rows.push(`<tr class="proj-row"><td colspan="5">${esc(info.title)}</td></tr>`);
+    if (!projectFolders.length) {
+      projectTests.forEach(t => rows.push(testRow(t, false, results)));
+      continue;
+    }
+    const groups = [
+      ...projectFolders.map(f => ({ key: f.id, folder: f, items: projectTests.filter(t => t.folder === f.id) })),
+      { key: `none:${project}`, folder: null, items: projectTests.filter(t => !t.folder) },
+    ];
+    for (const g of groups) {
+      if (!g.items.length && (searching || !g.folder)) continue;
+      const open = searching || !collapsed.has(g.key);
+      rows.push(folderRow(g.key, g.folder, g.items, open));
+      if (!open) continue;
+      if (!g.items.length) {
+        rows.push(`<tr class="folder-empty"><td colspan="5">Папка пуста — перенесите сюда кейсы через выбор «Папка» под названием кейса.</td></tr>`);
+      }
+      g.items.forEach(t => rows.push(testRow(t, true, results)));
+    }
+  }
+  return rows.join("");
+}
+
+// force: перерисовать таблицу, даже если пользователь сейчас печатает название или
+// выбирает папку. Без force (опрос раз в секунду во время запуска) таблицу не трогаем,
+// чтобы не сбить ввод.
+function render({ force = false } = {}) {
+  const visible = visibleTests();
+  const results = viewRun?.results || {};
+  $("totalCount").textContent = currentProject === "all" ? `(${tests.length})` : `(${visible.length} из ${tests.length})`;
+  const active = document.activeElement;
+  const busy = active && $("tbody").contains(active) && (active.tagName === "SELECT" || active.id === "titleInput");
+  if (force || !busy) {
+    const html = tableRows(visible, results);
+    $("tbody").innerHTML = html || `<tr><td colspan="5" class="empty">${tests.length ? "Ничего не найдено" : "Тестов пока нет"}</td></tr>`;
+    $("tbody").querySelectorAll("input[data-group]").forEach(cb => { cb.indeterminate = cb.dataset.some === "1"; });
+    const input = $("titleInput");
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+  }
+  const allVisibleSel = visible.length && visible.every(t => selected.has(t.nodeid));
+  const someSel = visible.some(t => selected.has(t.nodeid));
+  $("checkAll").checked = !!allVisibleSel;
+  $("checkAll").indeterminate = !allVisibleSel && someSel;
+  $("checkAll").disabled = isRunning();
+  const sel = selectedHere();
+  $("selInfo").textContent = `Выбрано: ${sel} из ${tests.length}`;
+  $("btnRun").disabled = isRunning() || sel === 0;
+  $("btnRun").textContent = isRunning() ? "Идёт запуск…" : `Запустить выбранные (${sel})`;
+  $("btnStop").disabled = !isRunning();
+  renderFields();
+}
+
+function renderRun() {
+  if (!viewRun) return;
+  const c = viewRun.counts || {};
+  $("runId").textContent = viewRun.id;
+  $("cTotal").textContent = viewRun.nodeids.length;
+  $("cPassed").textContent = c.passed || 0;
+  $("cFailed").textContent = (c.failed || 0) + (c.error || 0);
+  $("cRunning").textContent = (c.running || 0) + (c.queued || 0);
+  const started = new Date(viewRun.started_at * 1000).toLocaleString("ru-RU");
+  const end = viewRun.finished_at || Date.now() / 1000;
+  const secs = Math.round(end - viewRun.started_at);
+  const stateTxt = { running: "идёт", finished: "завершён", stopped: "остановлен" }[viewRun.state] || viewRun.state;
+  $("runInfo").textContent = `Старт: ${started} · ${stateTxt} · ${secs} с`;
+  if (viewRun.log != null && viewRun.log.length !== lastLogLen) {
+    const el = $("log");
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+    el.textContent = viewRun.log;
+    lastLogLen = viewRun.log.length;
+    if (atBottom) el.scrollTop = el.scrollHeight;
+  }
+}
+
+async function showRun(id, followPlatform = true) {
+  lastLogLen = -1;
+  viewRun = await api(`/api/runs/${id}`);
+  const runPlatform = viewRun.platform || "android";
+  if (followPlatform && runPlatform !== currentPlatform && platforms.some(p => p.key === runPlatform)) {
+    currentPlatform = runPlatform;
+    try { localStorage.setItem("platform", currentPlatform); } catch {}
+    applyPlatform();
+  }
+  renderRun(); render(); loadHistory();
+  clearTimeout(pollTimer);
+  if (viewRun.state === "running") poll();
+}
+
+async function poll() {
+  clearTimeout(pollTimer);
+  try {
+    viewRun = await api(`/api/runs/${viewRun.id}`);
+    renderRun(); render();
+  } catch (e) { /* сервер мог перезапуститься — пробуем снова */ }
+  if (viewRun.state === "running") {
+    pollTimer = setTimeout(poll, 1000);
+  } else {
+    loadHistory();
+    const c = viewRun.counts || {};
+    toast(`Запуск завершён: успешно ${c.passed || 0}, упало ${(c.failed || 0) + (c.error || 0)}`);
+  }
+}
+
+const platformTitle = (key) => platforms.find(p => p.key === key)?.title || key;
+
+async function loadHistory() {
+  const runs = await api("/api/runs").catch(() => []);
+  if (!runs.length) { $("history").innerHTML = `<li class="meta">Пока пусто</li>`; return; }
+  $("history").innerHTML = runs.map(r => {
+    const c = r.counts || {};
+    const fail = (c.failed || 0) + (c.error || 0);
+    const st = r.state === "running" ? "running" : fail ? "failed" : (c.passed === r.nodeids.length ? "passed" : "not_run");
+    const label = r.state === "running" ? "идёт" : `${c.passed || 0}/${r.nodeids.length}`;
+    return `<li data-run="${esc(r.id)}" class="${viewRun?.id === r.id ? "active" : ""}">
+      <div><div>${new Date(r.started_at * 1000).toLocaleString("ru-RU")}</div>
+      <div class="meta">${esc(platformTitle(r.platform || "android"))} · ${r.nodeids.length} кейс(ов)${r.state === "stopped" ? " · остановлен" : ""}</div></div>
+      <span class="badge ${st}">${label}</span></li>`;
+  }).join("");
+}
+
+async function loadHealth() {
+  const h = await api("/api/health").catch(() => null);
+  if (!h) return;
+  const ph = h.platforms[currentPlatform] || { appium: false, devices: [] };
+  const name = platformTitle(currentPlatform);
+  $("hAppium").className = "dot " + (ph.appium ? "on" : "off");
+  $("hAppiumTxt").textContent = `${name}: ` + (ph.appium ? "Appium запущен" : "Appium не запущен");
+  $("hDevice").className = "dot " + (ph.devices.length ? "on" : "off");
+  $("hDeviceTxt").textContent = ph.devices.length ? `Устройство: ${ph.devices.join(", ")}`
+    : (currentPlatform === "ios" ? "Нет Simulator" : "Нет устройства");
+  setStream(h.stream, h.stream_url);
+}
+
+// Живой экран: MJPEG-трансляция UiAutomator2 доступна, пока идёт сессия теста
+let streamOn = false;
+function setStream(available, url) {
+  if (available && !streamOn) {
+    streamOn = true;
+    $("stream").src = `${url}?t=${Date.now()}`;
+  } else if (!available && streamOn) {
+    streamOn = false;
+    $("stream").removeAttribute("src");
+  }
+  $("phone").classList.toggle("live", streamOn);
+  $("liveBadge").classList.toggle("on", streamOn);
+  $("liveBadge").textContent = streamOn ? "LIVE" : "нет трансляции";
+  $("placeholder").innerHTML = isRunning()
+    ? "Подключение к устройству…<br>(установка и запуск приложения)"
+    : "Трансляция появится,<br>когда начнётся тест";
+}
+$("stream").addEventListener("error", () => { streamOn = false; setStream(false); });
+
+function healthLoop() {
+  loadHealth().finally(() => setTimeout(healthLoop, isRunning() ? 1000 : 4000));
+}
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+async function updateTest(nodeid, patch) {
+  const res = await api("/api/tests/meta", { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify({ nodeid, ...patch }) });
+  const t = tests.find(x => x.nodeid === nodeid);
+  if (t) {
+    t.title = res.title || t.original_title;
+    t.folder = res.folder || null;
+  }
+}
+
+async function saveTitle(nodeid) {
+  const t = tests.find(x => x.nodeid === nodeid);
+  const value = editDraft.trim();
+  try {
+    // Пустое или совпадающее с исходным — значит, своего названия нет
+    await updateTest(nodeid, { title: value && value !== t.original_title ? value : null });
+    editing = null;
+    toast("Название сохранено");
+  } catch (e) { toast(e.message); }
+  render({ force: true });
+}
+
+function startEdit(nodeid) {
+  editing = nodeid;
+  editDraft = tests.find(x => x.nodeid === nodeid)?.title || "";
+  render({ force: true });
+}
+
+$("tbody").addEventListener("change", async (e) => {
+  const el = e.target;
+  if (el.dataset.id && el.type === "checkbox") {
+    el.checked ? selected.add(el.dataset.id) : selected.delete(el.dataset.id);
+    saveSel(); render({ force: true });
+  } else if (el.dataset.group) {
+    (groupIds.get(el.dataset.group) || []).forEach(id => el.checked ? selected.add(id) : selected.delete(id));
+    saveSel(); render({ force: true });
+  } else if (el.dataset.move) {
+    try {
+      await updateTest(el.dataset.move, { folder: el.value || null });
+      const f = folders.find(x => x.id === el.value);
+      toast(f ? `Перенесено в «${f.name}»` : "Перенесено в «Без папки»");
+    } catch (err) { toast(err.message); }
+    el.blur();
+    render({ force: true });
+  }
+});
+
+$("tbody").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === "toggle") {
+    const key = btn.dataset.key;
+    collapsed.has(key) ? collapsed.delete(key) : collapsed.add(key);
+    saveCollapsed(); render({ force: true });
+  } else if (action === "edit-title") {
+    startEdit(btn.dataset.id);
+  } else if (action === "save-title") {
+    saveTitle(btn.dataset.id);
+  } else if (action === "cancel-title") {
+    editing = null; render({ force: true });
+  } else if (action === "rename-folder") {
+    const folder = folders.find(f => f.id === btn.dataset.folder);
+    const name = prompt("Новое название папки:", folder.name);
+    if (name == null || name.trim() === folder.name) return;
+    try {
+      const res = await api(`/api/folders/${encodeURIComponent(folder.id)}`, { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify({ name }) });
+      folder.name = res.name;
+      toast("Папка переименована");
+    } catch (err) { toast(err.message); }
+    render({ force: true });
+  } else if (action === "delete-folder") {
+    const folder = folders.find(f => f.id === btn.dataset.folder);
+    const count = tests.filter(t => t.folder === folder.id).length;
+    if (!confirm(`Удалить папку «${folder.name}»?\nКейсы (${count}) не удалятся — они перейдут в «Без папки».`)) return;
+    try {
+      await api(`/api/folders/${encodeURIComponent(folder.id)}`, { method: "DELETE" });
+      folders = folders.filter(f => f.id !== folder.id);
+      tests.forEach(t => { if (t.folder === folder.id) t.folder = null; });
+      toast("Папка удалена");
+    } catch (err) { toast(err.message); }
+    render({ force: true });
+  }
+});
+
+$("tbody").addEventListener("input", (e) => {
+  if (e.target.id === "titleInput") editDraft = e.target.value;
+});
+$("tbody").addEventListener("keydown", (e) => {
+  if (e.target.id !== "titleInput") return;
+  if (e.key === "Enter") { e.preventDefault(); saveTitle(editing); }
+  if (e.key === "Escape") { editing = null; render({ force: true }); }
+});
+
+$("btnNewFolder").addEventListener("click", async () => {
+  if (currentProject === "all") {
+    toast("Откройте вкладку сборки (KZ или UZ) — папка создаётся внутри неё");
+    return;
+  }
+  const name = prompt("Название новой папки:");
+  if (name == null || !name.trim()) return;
+  try {
+    const folder = await api("/api/folders", { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ project: currentProject, name }) });
+    folders.push(folder);
+    toast(`Папка «${folder.name}» создана`);
+  } catch (err) { toast(err.message); }
+  render({ force: true });
+});
+$("checkAll").addEventListener("change", (e) => {
+  visibleTests().forEach(t => e.target.checked ? selected.add(t.nodeid) : selected.delete(t.nodeid));
+  saveSel(); render({ force: true });
+});
+$("search").addEventListener("input", () => render({ force: true }));
+$("btnReload").addEventListener("click", loadTests);
+$("platformTabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-platform]");
+  if (!btn || btn.dataset.platform === currentPlatform) return;
+  currentPlatform = btn.dataset.platform;
+  try { localStorage.setItem("platform", currentPlatform); } catch {}
+  editing = null;
+  applyPlatform();
+});
+$("projectTabs").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-project]");
+  if (!btn) return;
+  currentProject = btn.dataset.project;
+  try { localStorage.setItem("project", currentProject); } catch {}
+  editing = null;
+  renderTabs(); render({ force: true });
+});
+$("history").addEventListener("click", (e) => {
+  const li = e.target.closest("li[data-run]");
+  if (li) showRun(li.dataset.run);
+});
+$("fieldsPanel").addEventListener("input", (e) => {
+  const env = e.target.dataset?.env;
+  if (!env) return;
+  fieldValues[env] = e.target.value;
+  saveFieldValues();
+  e.target.classList.toggle("empty-required", !e.target.value.trim() && !e.target.hasAttribute("data-optional"));
+});
+$("btnRun").addEventListener("click", async () => {
+  const nodeids = tests.map(t => t.nodeid).filter(id => selected.has(id));
+  const env = Object.fromEntries(neededFields().map(f => [f.env, fieldValues[f.env] || ""]));
+  try {
+    const { run_id } = await api("/api/run", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nodeids, env }),
+    });
+    await showRun(run_id);
+  } catch (e) { toast(e.message); }
+});
+$("btnStop").addEventListener("click", async () => {
+  try { await api("/api/stop", { method: "POST" }); toast("Запуск остановлен"); }
+  catch (e) { toast(e.message); }
+});
+
+(async function init() {
+  healthLoop();
+  await loadTests();
+  const runs = await api("/api/runs").catch(() => []);
+  if (runs.length) await showRun(runs[0].id, false); else loadHistory();
+})();
+</script>
+</body>
+</html>

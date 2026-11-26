@@ -1,0 +1,32 @@
+# Окружение и IDE
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.idea/
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Результаты прогонов: логи, скриншоты, видео (сотни МБ)
+reports/
+screenshots/
+ios/screenshots/
+*.mp4
+*.log
+
+# Сборки приложений — скачиваются заново (ios/scripts/build_app.sh, apks со стенда)
+apks/
+ios/apps/
+*.apk
+*.ipa
+
+# Собранная тестовая камера — собирается ios/tools/test_camera/build.sh
+*.dylib
+
+# Рабочая база админки (задачи, кейсы, настройки) — создаётся при запуске
+admin/*.db
+
+# Локальные настройки Claude Code
+.claude/settings.local.json

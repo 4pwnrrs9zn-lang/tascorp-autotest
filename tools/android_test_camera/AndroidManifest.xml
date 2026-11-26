@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Тестовая камера для автотестов на эмуляторе: см. src/kz/tascorp/testcamera/CaptureActivity.java -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="kz.tascorp.testcamera"
+    android:versionCode="1"
+    android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="34" />
+    <application android:label="TasCorp Test Camera" android:hasCode="true">
+        <activity
+            android:name=".CaptureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="android.media.action.IMAGE_CAPTURE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TasCorp — Management</title>
+<style>
+  :root {
+    --bg: #f4f6fa; --card: #fff; --text: #1a2233; --muted: #6b7486; --line: #e3e7ef;
+    --brand: #0053d6; --brand-hover: #0045b3;
+    --ok: #12824c; --ok-bg: #e3f5ea; --fail: #c62828; --fail-bg: #fdecec;
+    --warn: #a15c00; --warn-bg: #fff3dc; --run: #0053d6; --run-bg: #e5eefc;
+    --idle-bg: #eef0f4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--brand); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .sub { opacity: .8; font-size: 13px; }
+  .nav { display: flex; gap: 4px; margin-left: 12px; }
+  .nav a { color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; opacity: .8; font-weight: 500; }
+  .nav a:hover { background: rgba(255,255,255,.12); opacity: 1; }
+  .nav a.active { background: rgba(255,255,255,.2); opacity: 1; }
+  .head-right { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .pill { background: rgba(255,255,255,.15); border-radius: 999px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; user-select: none; }
+  .switch input { width: 16px; height: 16px; accent-color: #4ade80; cursor: pointer; }
+
+  main { max-width: 1400px; margin: 20px auto; padding: 0 16px; display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .card h2 { font-size: 15px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+  .card h2 .count { color: var(--muted); font-weight: 400; }
+  .toolbar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .toolbar select { flex: 1; min-width: 160px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+  .syncinfo { padding: 8px 16px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .syncinfo.err { color: var(--fail); background: var(--fail-bg); white-space: pre-wrap; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; color: var(--text); padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  button:hover:not(:disabled) { background: #f0f3f8; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: var(--brand-hover); }
+  button.ok { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 600; }
+  button.ok:hover:not(:disabled) { background: #0e6b3e; }
+  button.danger { color: var(--fail); border-color: #f1c4c4; }
+  button.small { padding: 4px 10px; font-size: 13px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--idle-bg); color: var(--muted); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.run { background: var(--run-bg); color: var(--run); }
+  .badge.spin::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tasks { list-style: none; margin: 0; padding: 0; max-height: calc(100vh - 230px); overflow: auto; }
+  .tasks li { padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .tasks li:hover { background: #fafbfd; }
+  .tasks li.active { background: var(--run-bg); box-shadow: inset 3px 0 0 var(--brand); }
+  .tasks .top { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+  .tasks .ttl { font-weight: 500; margin: 3px 0 6px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .group-h { padding: 8px 16px; background: #e9eef7; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; cursor: default !important; }
+  .empty { padding: 30px 16px; text-align: center; color: var(--muted); }
+
+  .detail-h { padding: 16px; border-bottom: 1px solid var(--line); }
+  .detail-h .meta { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .detail-h h3 { margin: 6px 0 0; font-size: 18px; }
+  .detail-h a { color: var(--brand); text-decoration: none; }
+  .detail-h a:hover { text-decoration: underline; }
+  .block { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .block h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+  .notice { padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+  .notice.warn { background: var(--warn-bg); color: var(--warn); }
+  .notice.fail { background: var(--fail-bg); color: var(--fail); }
+  .notice.run { background: var(--run-bg); color: var(--run); }
+  .notice .grow { flex: 1; min-width: 200px; }
+  .notice pre { white-space: pre-wrap; margin: 6px 0 0; font-size: 12px; }
+  .questions { margin: 0; padding-left: 20px; }
+  .questions li { margin-bottom: 4px; }
+  details.req summary { cursor: pointer; color: var(--brand); font-size: 13px; }
+  details.req pre { white-space: pre-wrap; font: inherit; background: #fafbfd; border: 1px solid var(--line); border-radius: 6px; padding: 10px; margin: 8px 0 0; max-height: 320px; overflow: auto; }
+
+  .tabs { display: flex; gap: 6px; padding: 12px 16px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--line); }
+  .tab { border: 1px solid var(--line); background: #fafbfd; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 500; }
+  .tab:hover { background: #f0f3f8; }
+  .tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .tab .count { opacity: .75; font-weight: 400; }
+  .tabs .spacer { flex: 1; }
+
+  .case { border-bottom: 1px solid var(--line); padding: 12px 16px; }
+  .case:last-child { border-bottom: none; }
+  .case-h { display: flex; gap: 10px; align-items: flex-start; }
+  .case-h .ttl { flex: 1; font-weight: 500; cursor: pointer; }
+  .case-h .ttl .arrow { display: inline-block; width: 14px; color: var(--muted); }
+  .case-meta { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 0 24px; font-size: 12px; color: var(--muted); align-items: center; }
+  .case-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .case-body { margin: 10px 0 0 24px; }
+  .case-body .rat { color: var(--muted); margin-bottom: 8px; }
+  .case-body .pre { margin-bottom: 8px; }
+  .steps { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .steps th, .steps td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  .steps th { background: #fafbfd; color: var(--muted); font-weight: 600; font-size: 12px; }
+  .steps td.n { width: 32px; color: var(--muted); }
+  .case .reason { margin: 6px 0 0 24px; font-size: 13px; color: var(--fail); }
+  .case .qlink { color: var(--ok); font-size: 13px; text-decoration: none; font-weight: 600; }
+  .case .qlink:hover { text-decoration: underline; }
+
+  .edit { margin: 10px 0 0 24px; display: grid; gap: 8px; }
+  .edit label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 2px; }
+  .edit input, .edit textarea, .edit select { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+  .edit textarea { resize: vertical; min-height: 34px; }
+  .edit .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .edit .steps td { padding: 4px; }
+  .edit .steps textarea { min-height: 50px; }
+  .edit .bar { display: flex; gap: 8px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a2233; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; z-index: 10; max-width: 90vw; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>TasCorp — Management</h1>
+    <div class="sub">Azure Boards → агент → подтверждение QA → Qase</div>
+  </div>
+  <nav class="nav">
+    <a href="/">Автотесты</a>
+    <a href="/management" class="active">Management</a>
+  </nav>
+  <div class="head-right">
+    <label class="switch pill" title="Агент сам проверяет спринт и генерирует кейсы для новых задач в нужных статусах">
+      <input type="checkbox" id="autogen"> <span id="autogenTxt">Автогенерация</span>
+    </label>
+    <span class="pill" id="qaseProject">Qase: …</span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Задачи спринта <span class="count" id="taskCount"></span></h2>
+    <div class="toolbar">
+      <select id="sprint" title="Спринт"><option>Загрузка…</option></select>
+      <button id="btnSync" title="Перечитать задачи из Azure Boards">⟳ Azure</button>
+    </div>
+    <div class="syncinfo" id="syncInfo">Синхронизация с Azure…</div>
+    <ul class="tasks" id="tasks"><li class="empty">Загрузка…</li></ul>
+  </section>
+
+  <section class="card" id="detail">
+    <div class="empty">Выберите задачу слева — здесь появятся тест-кейсы агента.</div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+const CASE_STATUS = {
+  pending: ["Не подтверждён", "warn"], sent: ["Подтверждён · в Qase", "ok"],
+  rejected: ["Отклонён", "fail"], error: ["Ошибка отправки", "fail"],
+};
+const TASK_STATE = { New: "", Active: "run", RFT: "warn", Testing: "warn", Closed: "ok", Resolved: "ok", Done: "ok" };
+const GEN = {
+  none: ["Кейсов нет", ""], queued: ["В очереди", "run spin"], running: ["Генерация…", "run spin"],
+  error: ["Ошибка генерации", "fail"],
+};
+const LABEL = {
+  priority: { high: "Высокий", medium: "Средний", low: "Низкий" },
+  severity: { blocker: "Blocker", critical: "Critical", major: "Major", normal: "Normal", minor: "Minor", trivial: "Trivial" },
+  behavior: { positive: "Позитивный", negative: "Негативный", destructive: "Деструктивный" },
+  country: { all: "KZ + UZ", kz: "KZ", uz: "UZ" },
+};
+const FILTERS = [["pending", "Не подтверждённые"], ["sent", "Подтверждённые"], ["rejected", "Отклонённые"], ["all", "Все"]];
+
+let state = null;           // /api/mgmt/state
+let sprints = [];
+let sprint = "";            // путь спринта (FC\TASCORP - sprint 22)
+let taskId = null;          // выбранная задача
+let task = null;            // /api/mgmt/tasks/<id>
+let filter = "pending";
+let open = new Set();       // раскрытые кейсы
+let editing = null;         // id кейса в режиме правки
+let draft = null;           // черновик правки
+let busy = false;           // идёт запрос подтверждения/отклонения
+let pollTimer = null;
+
+try { taskId = Number(localStorage.getItem("mgmtTask")) || null; } catch {}
+try { filter = localStorage.getItem("mgmtFilter") || "pending"; } catch {}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", 4000);
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+const post = (path, body) => api(path, { method: "POST", headers: JSON_HEADERS, body: JSON.stringify(body || {}) });
+
+const ago = (ts) => {
+  if (!ts) return "—";
+  const s = Math.round(Date.now() / 1000 - ts);
+  return s < 60 ? "только что" : s < 3600 ? `${Math.round(s / 60)} мин назад` : new Date(ts * 1000).toLocaleString("ru-RU");
+};
+
+// ---------- задачи ----------
+
+async function sync(sprintName) {
+  $("btnSync").disabled = true;
+  try {
+    const res = await post("/api/mgmt/sync", { sprint: sprintName || "current" });
+    sprints = res.sprints; sprint = res.sprint;
+    renderSprints();
+    if (res.queued.length) toast(`Агент взял в работу задач: ${res.queued.length}`);
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    $("btnSync").disabled = false;
+  }
+  await loadState();
+}
+
+async function loadState() {
+  try {
+    state = await api(`/api/mgmt/state?sprint=${encodeURIComponent(sprint)}`);
+  } catch (e) {
+    $("syncInfo").className = "syncinfo err"; $("syncInfo").textContent = e.message; return;
+  }
+  if (!sprint) sprint = state.sprint;
+  renderHead(); renderTasks();
+  if (taskId && state.tasks.some(t => t.id === taskId)) {
+    // Карточку задачи перечитываем, только если у неё что-то поменялось — иначе не сбиваем правку
+    const t = state.tasks.find(t => t.id === taskId);
+    if (!task || task.id !== taskId || task.gen_status !== t.gen_status || task.state !== t.state
+        || JSON.stringify(task.counts) !== JSON.stringify(t.counts)) await loadTask(taskId);
+  }
+  schedulePoll();
+}
+
+function schedulePoll() {
+  clearTimeout(pollTimer);
+  const generating = state?.tasks.some(t => t.gen_status === "queued" || t.gen_status === "running");
+  pollTimer = setTimeout(loadState, generating ? 3000 : 30000);
+}
+
+function renderHead() {
+  $("autogen").checked = state.autogen;
+  $("autogenTxt").textContent = state.autogen
+    ? `Автогенерация: ${state.auto_states.join(", ")} · каждые ${state.poll_min} мин` : "Автогенерация выкл.";
+  $("qaseProject").textContent = `Qase: ${state.qase_project}`;
+  const info = $("syncInfo");
+  if (state.last_sync_error) {
+    info.className = "syncinfo err"; info.textContent = `Azure: ${state.last_sync_error}`;
+  } else {
+    info.className = "syncinfo"; info.textContent = `Синхронизация с Azure: ${ago(state.last_sync)}`;
+  }
+}
+
+function renderSprints() {
+  const sel = $("sprint");
+  const list = sprints.filter(s => s.timeframe !== "past" || s.path === sprint).reverse();
+  const past = sprints.filter(s => s.timeframe === "past" && s.path !== sprint).reverse().slice(0, 5);
+  const opt = (s) => `<option value="${esc(s.name)}" ${s.path === sprint ? "selected" : ""}>${esc(s.name)}${s.timeframe === "current" ? " (текущий)" : ""}</option>`;
+  sel.innerHTML = list.map(opt).join("") + (past.length ? `<optgroup label="Прошедшие">${past.map(opt).join("")}</optgroup>` : "");
+}
+
+function genBadge(t) {
+  if (t.gen_status === "done") return t.changed ? `<span class="badge warn" title="Описание в Azure поменялось после генерации">Требование изменилось</span>` : "";
+  const [txt, cls] = GEN[t.gen_status] || [t.gen_status, ""];
+  return `<span class="badge ${cls}">${txt}</span>`;
+}
+
+function countChips(c) {
+  const chips = [];
+  if (c.pending) chips.push(`<span class="badge warn">${c.pending} не подтв.</span>`);
+  if (c.error) chips.push(`<span class="badge fail">${c.error} ошибка</span>`);
+  if (c.sent) chips.push(`<span class="badge ok">${c.sent} в Qase</span>`);
+  if (c.rejected) chips.push(`<span class="badge">${c.rejected} откл.</span>`);
+  return chips.join("");
+}
+
+function renderTasks() {
+  const tasks = state.tasks;
+  $("taskCount").textContent = `(${tasks.length})`;
+  if (!tasks.length) { $("tasks").innerHTML = `<li class="empty">В спринте нет задач</li>`; return; }
+  // Сначала статусы, с которыми работает агент (Active), затем остальные в порядке борда
+  const order = ["Active", "New", "RFT", "Testing", "Resolved", "Closed", "Done"];
+  const rank = (s) => state.auto_states.includes(s) ? -1 : (order.indexOf(s) + 1 || 99);
+  const states = [...new Set(tasks.map(t => t.state))].sort((a, b) => rank(a) - rank(b));
+  $("tasks").innerHTML = states.map(st => {
+    const items = tasks.filter(t => t.state === st);
+    return `<li class="group-h">${esc(st)} · ${items.length}</li>` + items.map(t => `
+      <li data-task="${t.id}" class="${t.id === taskId ? "active" : ""}">
+        <div class="top"><span>#${t.id}</span><span>${esc(t.type)}</span></div>
+        <div class="ttl">${esc(t.title)}</div>
+        <div class="chips">${genBadge(t)}${countChips(t.counts)}</div>
+      </li>`).join("");
+  }).join("");
+}
+
+// ---------- карточка задачи ----------
+
+async function loadTask(id) {
+  taskId = id;
+  try { localStorage.setItem("mgmtTask", String(id)); } catch {}
+  try { task = await api(`/api/mgmt/tasks/${id}`); }
+  catch (e) { toast(e.message); return; }
+  renderTasks(); renderDetail();
+}
+
+function stepsTable(steps) {
+  return `<table class="steps"><thead><tr><th class="n">#</th><th>Действие</th><th>Данные</th><th>Ожидаемый результат</th></tr></thead><tbody>
+    ${steps.map((s, i) => `<tr><td class="n">${i + 1}</td><td>${esc(s.action)}</td><td>${esc(s.data)}</td><td>${esc(s.expected_result)}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+function editForm(c) {
+  const sel = (key) => `<select data-f="${key}">${Object.entries(LABEL[key]).map(([v, l]) =>
+    `<option value="${v}" ${draft[key] === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  return `<div class="edit">
+    <div><label>Название</label><input data-f="title" value="${esc(draft.title)}"></div>
+    <div><label>Предусловия</label><textarea data-f="preconditions">${esc(draft.preconditions)}</textarea></div>
+    <div class="row">
+      <div><label>Приоритет</label>${sel("priority")}</div>
+      <div><label>Серьёзность</label>${sel("severity")}</div>
+      <div><label>Тип</label>${sel("behavior")}</div>
+      <div><label>Сборка</label>${sel("country")}</div>
+    </div>
+    <table class="steps"><thead><tr><th class="n">#</th><th>Действие</th><th>Данные</th><th>Ожидаемый результат</th><th class="n"></th></tr></thead><tbody>
+      ${draft.steps.map((s, i) => `<tr><td class="n">${i + 1}</td>
+        <td><textarea data-step="${i}" data-k="action">${esc(s.action)}</textarea></td>
+        <td><textarea data-step="${i}" data-k="data">${esc(s.data)}</textarea></td>
+        <td><textarea data-step="${i}" data-k="expected_result">${esc(s.expected_result)}</textarea></td>
+        <td class="n"><button class="small" data-act="del-step" data-i="${i}" title="Удалить шаг">✕</button></td></tr>`).join("")}
+    </tbody></table>
+    <div class="bar">
+      <button class="small" data-act="add-step">+ Шаг</button>
+      <span style="flex:1"></span>
+      <button class="small" data-act="cancel-edit">Отмена</button>
+      <button class="small primary" data-act="save-edit" data-id="${c.id}">Сохранить</button>
+    </div>
+  </div>`;
+}
+
+function caseCard(c) {
+  const [stTxt, stCls] = CASE_STATUS[c.status] || [c.status, ""];
+  const isOpen = open.has(c.id) || editing === c.id;
+  const canAct = c.status === "pending" || c.status === "error";
+  const qase = state?.qase_project;
+  const actions = canAct ? `
+      <button class="small" data-act="edit" data-id="${c.id}" title="Изменить кейс перед подтверждением">✏️</button>
+      <button class="small danger" data-act="reject" data-id="${c.id}">Отклонить</button>
+      <button class="small ok" data-act="approve" data-id="${c.id}" ${busy ? "disabled" : ""}>Подтвердить</button>`
+    : c.status === "rejected" ? `<button class="small" data-act="restore" data-id="${c.id}">Вернуть</button>`
+    : c.qase_id ? `<a class="qlink" href="https://app.qase.io/case/${esc(qase)}-${c.qase_id}" target="_blank">${esc(qase)}-${c.qase_id} ↗</a>` : "";
+  const body = editing === c.id ? editForm(c) : isOpen ? `<div class="case-body">
+      ${c.rationale ? `<div class="rat">${c.kind === "regression" ? "Почему в регрессе: " : "Что проверяем: "}${esc(c.rationale)}</div>` : ""}
+      ${c.related_autotest ? `<div class="rat">Автотест: <code>${esc(c.related_autotest)}</code></div>` : ""}
+      ${c.preconditions ? `<div class="pre"><b>Предусловия:</b> ${esc(c.preconditions)}</div>` : ""}
+      ${stepsTable(c.steps || [])}
+    </div>` : "";
+  return `<div class="case">
+    <div class="case-h">
+      <div class="ttl" data-act="toggle" data-id="${c.id}"><span class="arrow">${isOpen ? "▾" : "▸"}</span>${esc(c.title)}</div>
+      <div class="case-actions">${actions}</div>
+    </div>
+    <div class="case-meta">
+      <span class="badge ${c.kind === "regression" ? "" : "run"}">${c.kind === "regression" ? "Регресс" : "Новая функц."}</span>
+      <span class="badge ${stCls}">${stTxt}</span>
+      <span>${LABEL.priority[c.priority] || c.priority} · ${LABEL.severity[c.severity] || c.severity} · ${LABEL.behavior[c.behavior] || c.behavior} · ${LABEL.country[c.country] || c.country}</span>
+      <span>· шагов: ${(c.steps || []).length}</span>
+    </div>
+    ${c.status === "rejected" && c.reason ? `<div class="reason">Причина: ${esc(c.reason)}</div>` : ""}
+    ${c.status === "error" && c.error ? `<div class="reason">${esc(c.error)}</div>` : ""}
+    ${body}
+  </div>`;
+}
+
+function renderDetail() {
+  const t = task;
+  if (!t) return;
+  const cases = t.cases;
+  const counts = { all: cases.length };
+  for (const c of cases) {
+    const k = c.status === "error" ? "pending" : c.status;  // ошибка отправки — тоже ждёт подтверждения
+    counts[k] = (counts[k] || 0) + 1;
+  }
+  const shown = cases.filter(c => filter === "all" || c.status === filter || (filter === "pending" && c.status === "error"));
+  const pendingIds = cases.filter(c => c.status === "pending" || c.status === "error").map(c => c.id);
+  const generating = t.gen_status === "queued" || t.gen_status === "running";
+
+  let gen = "";
+  if (generating) {
+    gen = `<div class="notice run"><span class="badge run spin">${GEN[t.gen_status][0]}</span>
+      <span class="grow">Агент анализирует требования и пишет кейсы. Обычно это 2–5 минут, страница обновится сама.</span></div>`;
+  } else if (t.gen_status === "none") {
+    gen = `<div class="notice"><span class="grow">Агент ещё не генерировал кейсы по этой задаче.</span>
+      <button class="primary" data-act="generate">Сгенерировать кейсы</button></div>`;
+  } else if (t.gen_status === "error") {
+    gen = `<div class="notice fail"><div class="grow"><b>Генерация не удалась</b><pre>${esc(t.gen_error)}</pre></div>
+      <button data-act="generate">Повторить</button></div>`;
+  } else if (t.changed) {
+    gen = `<div class="notice warn"><span class="grow">Описание задачи в Azure изменилось после генерации — кейсы могут быть неактуальны.</span>
+      <button data-act="regenerate">Перегенерировать</button></div>`;
+  }
+
+  const questions = t.questions.length ? `<div class="block"><h4>Открытые вопросы к PM / разработке (${t.questions.length})</h4>
+    <ol class="questions">${t.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></div>` : "";
+  const summary = t.summary ? `<div class="block"><h4>Как агент понял задачу</h4>${esc(t.summary)}</div>` : "";
+  const genMeta = t.gen_at ? ` · сгенерировано ${ago(t.gen_at)}${t.gen_cost ? ` · $${t.gen_cost.toFixed(2)}` : ""}` : "";
+
+  $("detail").innerHTML = `
+    <div class="detail-h">
+      <div class="meta">
+        <a href="${esc(t.url)}" target="_blank">ADO-${t.id} ↗</a>
+        <span class="badge ${TASK_STATE[t.state] ?? ""}">${esc(t.state)}</span>
+        <span>${esc(t.type)} · ${esc(t.sprint_name)}${genMeta}</span>
+        ${t.gen_status === "done" && !t.changed ? `<span style="flex:1"></span><button class="small" data-act="regenerate">Перегенерировать</button>` : ""}
+      </div>
+      <h3>${esc(t.title)}</h3>
+      <details class="req"><summary>Требования из Azure</summary><pre>${esc(t.text || "(описание пустое)")}</pre></details>
+    </div>
+    ${gen}${summary}${questions}
+    ${cases.length ? `
+    <div class="tabs">
+      ${FILTERS.map(([k, l]) => `<button class="tab ${filter === k ? "active" : ""}" data-filter="${k}">${l} <span class="count">${counts[k] || 0}</span></button>`).join("")}
+      <span class="spacer"></span>
+      ${pendingIds.length ? `<button class="ok" data-act="approve-all" ${busy ? "disabled" : ""}>Подтвердить все (${pendingIds.length}) → Qase</button>` : ""}
+    </div>
+    ${shown.map(caseCard).join("") || `<div class="empty">${filter === "pending" ? "Все кейсы разобраны 🎉" : "Пусто"}</div>`}` : ""}`;
+}
+
+// ---------- действия ----------
+
+async function approve(ids) {
+  busy = true; renderDetail();
+  try {
+    const res = await post("/api/mgmt/cases/approve", { ids });
+    toast(`Отправлено в Qase: ${res.sent}`);
+  } catch (e) { toast(e.message); }
+  busy = false;
+  await loadTask(taskId); loadState();
+}
+
+$("detail").addEventListener("click", async (e) => {
+  const tab = e.target.closest("[data-filter]");
+  if (tab) {
+    filter = tab.dataset.filter;
+    try { localStorage.setItem("mgmtFilter", filter); } catch {}
+    renderDetail(); return;
+  }
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const id = Number(el.dataset.id);
+  const act = el.dataset.act;
+  if (act === "toggle") {
+    open.has(id) ? open.delete(id) : open.add(id); renderDetail();
+  } else if (act === "generate" || act === "regenerate") {
+    if (act === "regenerate" && !confirm("Перегенерировать кейсы?\nНеподтверждённые кейсы будут заменены новыми. Подтверждённые (уже в Qase) и отклонённые останутся.")) return;
+    try { await post(`/api/mgmt/tasks/${taskId}/generate`); toast("Задача поставлена в очередь агента"); }
+    catch (err) { toast(err.message); }
+    await loadTask(taskId); loadState();
+  } else if (act === "approve") {
+    approve([id]);
+  } else if (act === "approve-all") {
+    const ids = task.cases.filter(c => c.status === "pending" || c.status === "error").map(c => c.id);
+    if (confirm(`Подтвердить ${ids.length} кейс(ов) и отправить в Qase?`)) approve(ids);
+  } else if (act === "reject") {
+    const reason = prompt("Причина отклонения (необязательно) — например «дубль», «неверное бизнес-правило», «не применимо к UZ»:");
+    if (reason === null) return;
+    try { await post("/api/mgmt/cases/reject", { ids: [id], reason }); } catch (err) { toast(err.message); }
+    await loadTask(taskId); loadState();
+  } else if (act === "restore") {
+    try { await post("/api/mgmt/cases/restore", { ids: [id] }); } catch (err) { toast(err.message); }
+    await loadTask(taskId); loadState();
+  } else if (act === "edit") {
+    const c = task.cases.find(x => x.id === id);
+    editing = id;
+    draft = JSON.parse(JSON.stringify({ title: c.title, preconditions: c.preconditions || "", priority: c.priority,
+      severity: c.severity, behavior: c.behavior, country: c.country,
+      steps: (c.steps || []).map(s => ({ action: s.action || "", data: s.data || "", expected_result: s.expected_result || "" })) }));
+    renderDetail();
+  } else if (act === "add-step") {
+    draft.steps.push({ action: "", data: "", expected_result: "" }); renderDetail();
+  } else if (act === "del-step") {
+    draft.steps.splice(Number(el.dataset.i), 1); renderDetail();
+  } else if (act === "cancel-edit") {
+    editing = null; draft = null; renderDetail();
+  } else if (act === "save-edit") {
+    try {
+      await api(`/api/mgmt/cases/${id}`, { method: "PATCH", headers: JSON_HEADERS, body: JSON.stringify(draft) });
+      editing = null; draft = null; toast("Кейс сохранён");
+      await loadTask(taskId);
+    } catch (err) { toast(err.message); }
+  }
+});
+
+// Поля формы правки пишем в draft сразу, чтобы перерисовка (добавить шаг) не теряла ввод
+$("detail").addEventListener("input", (e) => {
+  if (!draft) return;
+  const el = e.target;
+  if (el.dataset.f) draft[el.dataset.f] = el.value;
+  else if (el.dataset.step) draft.steps[Number(el.dataset.step)][el.dataset.k] = el.value;
+});
+$("detail").addEventListener("change", (e) => {
+  if (draft && e.target.dataset.f) draft[e.target.dataset.f] = e.target.value;
+});
+
+$("tasks").addEventListener("click", (e) => {
+  const li = e.target.closest("li[data-task]");
+  if (!li) return;
+  editing = null; draft = null; open = new Set();
+  loadTask(Number(li.dataset.task));
+});
+$("sprint").addEventListener("change", (e) => { taskId = null; task = null; $("detail").innerHTML = `<div class="empty">Выберите задачу слева.</div>`; sync(e.target.value); });
+$("btnSync").addEventListener("click", () => sync(sprints.find(s => s.path === sprint)?.name));
+$("autogen").addEventListener("change", async (e) => {
+  const on = e.target.checked;
+  if (on && !confirm(`Включить автогенерацию?\nАгент будет каждые ${state?.poll_min ?? 10} мин проверять текущий спринт и сам генерировать кейсы для задач в статусе ${state?.auto_states.join(", ")}, по которым кейсов ещё нет. Каждая генерация — вызов Claude (минуты и токены).`)) {
+    e.target.checked = false; return;
+  }
+  try { await post("/api/mgmt/settings", { autogen: on }); toast(on ? "Автогенерация включена" : "Автогенерация выключена"); }
+  catch (err) { toast(err.message); }
+  if (on) await sync(sprints.find(s => s.path === sprint)?.name); else loadState();
+});
+
+(async function init() {
+  await loadState();   // сразу показать то, что уже есть в локальной базе
+  await sync();        // и подтянуть свежее из Azure
+})();
+</script>
+</body>
+</html>

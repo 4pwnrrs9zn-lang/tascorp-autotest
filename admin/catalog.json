@@ -1,0 +1,125 @@
+{
+  "titles": {
+    "tests/kz/test_application.py::test_create_application_refinance": "Заявка «Рефинансирование» без созаёмщика(УДВ)",
+    "tests/kz/test_application.py::test_create_application_refinance_with_co_borrower": "Заявка «Рефинансирование» с созаёмщиком (УДВ)",
+    "tests/kz/test_application.py::test_create_application_basic": "Заявка «Новая» без созаёмщика(УДВ)",
+    "tests/kz/test_application.py::test_create_application_with_co_borrower": "Заявка «Новая» с созаёмщиком (УДВ)",
+    "tests/kz/test_application.py::test_create_application_autocredit": "Заявка «Автокредит» (УДВ)",
+    "tests/kz/test_application.py::test_create_application_transh": "Заявка «Транш» (УДВ)",
+    "tests/kz/test_application.py::test_create_application_refinance_residence_permit": "Заявка «Рефинансирование» без созаёмщика (ВНЖ)",
+    "tests/kz/test_application.py::test_create_application_refinance_passport": "Заявка «Рефинансирование» без созаёмщика (Паспорт)",
+    "tests/kz/test_auth.py::test_manager_login": "Авторизация: Менеджер",
+    "tests/kz/test_settings.py::test_switch_language_to_russian": "Настройка языка на Русский",
+    "ios/tests/kz/test_application.py::test_create_application_basic": "Заявка «Новая» УДВ, без созаемщика",
+    "ios/tests/kz/test_application.py::test_create_application_autocredit": "Заявка «Автокредит» (УДВ)",
+    "ios/tests/kz/test_application.py::test_create_application_transh": "Заявка «Транш» УДВ",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal": "Заявка «Внутреннее рефинансирование» без созаёмщика (УДВ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external": "Заявка «Внешнее рефинансирование» без созаёмщика (УДВ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_with_co_borrower": "Заявка «Внутреннее рефинансирование» с созаёмщиком (УДВ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_with_co_borrower": "Заявка «Внешнее рефинансирование» с созаёмщиком (УДВ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_residence_permit": "Заявка «Внутреннее рефинансирование» без созаёмщика (ВНЖ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_residence_permit": "Заявка «Внешнее рефинансирование» без созаёмщика (ВНЖ)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_passport": "Заявка «Внутреннее рефинансирование» без созаёмщика (Паспорт)",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_passport": "Заявка «Внешнее рефинансирование» без созаёмщика (Паспорт)",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity": "Заявка «Новая» Юр. лицо",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_autocredit": "Заявка «Автокредит» Юр. лицо",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_transh": "Заявка «Транш» Юр. лицо",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_refinance_internal": "Заявка «Внутреннее рефинансирование» Юр. лицо",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_refinance_external": "Заявка «Внешнее рефинансирование» Юр. лицо"
+  },
+  "folders": [
+    {
+      "id": "f_0e140508",
+      "project": "kz",
+      "name": "Новая заявка"
+    },
+    {
+      "id": "f_42d9dda1",
+      "project": "kz",
+      "name": "Автокредит"
+    },
+    {
+      "id": "f_c6f339ea",
+      "project": "kz",
+      "name": "Транш"
+    },
+    {
+      "id": "f_decebbdf",
+      "project": "kz",
+      "name": "Рефинансирование"
+    },
+    {
+      "id": "f_ecfe2ff8",
+      "project": "ios:kz",
+      "name": "Новая заявка"
+    },
+    {
+      "id": "f_7b709088",
+      "project": "ios:kz",
+      "name": "Транш"
+    },
+    {
+      "id": "f_11162178",
+      "project": "ios:kz",
+      "name": "Автокредит"
+    },
+    {
+      "id": "f_396a91aa",
+      "project": "ios:kz",
+      "name": "Внутреннее рефинансирование"
+    },
+    {
+      "id": "f_abb061da",
+      "project": "ios:kz",
+      "name": "Заявки для Юр.лиц"
+    },
+    {
+      "id": "f_e7c2a4b1",
+      "project": "ios:kz",
+      "name": "Внешнее рефинансирование"
+    }
+  ],
+  "placement": {
+    "tests/kz/test_application.py::test_create_application_basic": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_with_co_borrower": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_autocredit": "f_42d9dda1",
+    "tests/kz/test_application.py::test_create_application_transh": "f_c6f339ea",
+    "tests/kz/test_application.py::test_create_application_refinance": "f_decebbdf",
+    "tests/kz/test_application.py::test_create_application_refinance_with_co_borrower": "f_decebbdf",
+    "tests/kz/test_application.py::test_create_application_refinance_residence_permit": "f_decebbdf",
+    "tests/kz/test_application.py::test_create_application_refinance_passport": "f_decebbdf",
+    "ios/tests/kz/test_application.py::test_create_application_basic": "f_ecfe2ff8",
+    "ios/tests/kz/test_application.py::test_create_application_autocredit": "f_11162178",
+    "ios/tests/kz/test_application.py::test_create_application_transh": "f_7b709088",
+    "ios/tests/kz/test_application.py::test_create_application_with_co_borrower": "f_ecfe2ff8",
+    "tests/kz/test_application.py::test_create_application_autocredit_passport": "f_42d9dda1",
+    "tests/kz/test_application.py::test_create_application_autocredit_residence_permit": "f_42d9dda1",
+    "tests/kz/test_application.py::test_create_application_new_passport": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_new_passport_with_co_borrower": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_new_residence_permit": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_new_residence_permit_with_co_borrower": "f_0e140508",
+    "tests/kz/test_application.py::test_create_application_transh_passport": "f_c6f339ea",
+    "tests/kz/test_application.py::test_create_application_transh_residence_permit": "f_c6f339ea",
+    "ios/tests/kz/test_application.py::test_create_application_new_passport": "f_ecfe2ff8",
+    "ios/tests/kz/test_application.py::test_create_application_new_passport_with_co_borrower": "f_ecfe2ff8",
+    "ios/tests/kz/test_application.py::test_create_application_new_residence_permit": "f_ecfe2ff8",
+    "ios/tests/kz/test_application.py::test_create_application_new_residence_permit_with_co_borrower": "f_ecfe2ff8",
+    "ios/tests/kz/test_application.py::test_create_application_autocredit_passport": "f_11162178",
+    "ios/tests/kz/test_application.py::test_create_application_autocredit_residence_permit": "f_11162178",
+    "ios/tests/kz/test_application.py::test_create_application_transh_passport": "f_7b709088",
+    "ios/tests/kz/test_application.py::test_create_application_transh_residence_permit": "f_7b709088",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity": "f_abb061da",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal": "f_396a91aa",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external": "f_e7c2a4b1",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_with_co_borrower": "f_396a91aa",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_with_co_borrower": "f_e7c2a4b1",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_residence_permit": "f_396a91aa",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_residence_permit": "f_e7c2a4b1",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_internal_passport": "f_396a91aa",
+    "ios/tests/kz/test_application.py::test_create_application_refinance_external_passport": "f_e7c2a4b1",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_autocredit": "f_abb061da",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_transh": "f_abb061da",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_refinance_internal": "f_abb061da",
+    "ios/tests/kz/test_application.py::test_create_application_legal_entity_refinance_external": "f_abb061da"
+  }
+}
